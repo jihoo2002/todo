@@ -17,6 +17,7 @@ import javax.servlet.http.HttpServletRequest;
 @Slf4j
 @RequiredArgsConstructor
 @RequestMapping("/api/todos")
+@CrossOrigin(origins = "http://localhost:3000")
 public class TodoController {
 
     private final TodoService todoService;
@@ -76,14 +77,14 @@ public class TodoController {
         }
     }
 
-    //할일 수정하기
+    //할일 수정하기( //할일 완료인지 아닌지를 체크하는 메서드이다.)
     @RequestMapping(method = {RequestMethod.PATCH, RequestMethod.PUT})
     public ResponseEntity<?> updateTodo(
             @Validated @RequestBody TodoModifyRequestDTO requestDTO,
             BindingResult result,
             HttpServletRequest request
     ) {
-        //할일 완료인지 아닌지를 체크하는 메서드이다.
+
         if(result.hasErrors()) {
             return ResponseEntity.badRequest().body(result.getFieldError());
         }
@@ -94,7 +95,7 @@ public class TodoController {
             TodoListResponseDTO responseDTO = todoService.update(requestDTO);
             return ResponseEntity.ok().body(responseDTO);
         } catch (RuntimeException e) {
-         return ResponseEntity.internalServerError().body(TodoListResponseDTO.builder().error(e.getMessage()).build());
+         return ResponseEntity.internalServerError().body(TodoListResponseDTO.builder().error("존재하지 않는 ID라 수정 안됨!").build());
         }
     }
 

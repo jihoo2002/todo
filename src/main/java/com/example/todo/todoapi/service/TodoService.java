@@ -71,6 +71,7 @@ public class TodoService {
 
             todoRepository.save(todo);
         //여기서 targetEntity는 왜 못넣나????
+            //-> optional 타입이기 때문에 !!! 그래서 깐 데이터 todo를 주면 된다.
         });
 
         return retrieve();
