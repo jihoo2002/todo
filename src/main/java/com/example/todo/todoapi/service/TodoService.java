@@ -2,6 +2,7 @@ package com.example.todo.todoapi.service;
 
 
 import com.example.todo.todoapi.dto.request.TodoCreateRequestDTO;
+import com.example.todo.todoapi.dto.request.TodoModifyRequestDTO;
 import com.example.todo.todoapi.dto.response.TodoDetailResponseDTO;
 import com.example.todo.todoapi.dto.response.TodoListResponseDTO;
 import com.example.todo.todoapi.entity.Todo;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -49,4 +51,29 @@ public class TodoService {
     }
 
 
+    public TodoListResponseDTO delete(final String todoId) {
+        try {
+            todoRepository.deleteById(todoId);
+        } catch (Exception e) {
+            log.error("ID가 존재하지 않아 삭제에 실패했습니다.- ID :{}, ERR:{}" ,todoId, e.getMessage());
+            throw new RuntimeException("ID가 존재하지 않아 삭제에 실패했습니다."); //서비스에서 오류 잡으면 컨트롤러에게도 알려줘야 하기 때문에
+        }
+        return retrieve();
+    }
+
+    public TodoListResponseDTO update(final TodoModifyRequestDTO requestDTO)
+    throws RuntimeException {
+        Optional<Todo> targetEntity = todoRepository.findById(requestDTO.getId());
+
+        targetEntity.ifPresent(todo-> {
+            todo.setDone(requestDTO.isDone()); //화면단에서 반전시켜 보낸 값을 ToDO 엔터티 done에 세팅해준다.
+            //물론 백엔드에서 done을 반전시켜 화면단으로 내보내는 것도 가능하다.
+
+            todoRepository.save(todo);
+        //여기서 targetEntity는 왜 못넣나????
+        });
+
+        return retrieve();
+
+    }
 }
