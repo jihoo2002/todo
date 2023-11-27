@@ -17,30 +17,33 @@ import javax.servlet.http.HttpServletRequest;
 @Slf4j
 @RequiredArgsConstructor
 @RequestMapping("/api/todos")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin
 public class TodoController {
-
     private final TodoService todoService;
 
-    //할일 등록 요청
+    // 할 일 등록 요청
     @PostMapping
     public ResponseEntity<?> createTodo(
-          @Validated @RequestBody TodoCreateRequestDTO requestDTO
-          , BindingResult result
+            @Validated @RequestBody TodoCreateRequestDTO requestDTO,
+            BindingResult result
     ) {
-        if(result.hasErrors()) {
+        log.info("/api/todos POST");
+        if (result.hasErrors()) {
             log.warn("DTO 검증 에러 발생: {}", result.getFieldError());
-            return ResponseEntity.badRequest().body(result.getFieldError());
+            return ResponseEntity.badRequest()
+                    .body(result.getFieldError());
         }
+
         try {
-            TodoListResponseDTO responseDTO =  todoService.create(requestDTO);
-            return ResponseEntity.ok().body(responseDTO);
+            TodoListResponseDTO responseDTO = todoService.create(requestDTO);
+            return ResponseEntity.ok()
+                    .body(responseDTO);
         } catch (RuntimeException e) {
-            log.error(e.getMessage()); //e.printStackTrace();
-            return ResponseEntity
-                    .internalServerError()
+            log.error("error createTodo", e);
+            return ResponseEntity.internalServerError()
                     .body(TodoListResponseDTO.builder()
-                            .error(e.getMessage())); //dto 속 에러메세지를 담을 필드에 넣어줌
+                            .error(e.toString())
+                            .build());
         }
 
     }
@@ -57,7 +60,7 @@ public class TodoController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteTodo(
-            @PathVariable("id") String todoId 
+            @PathVariable("id") String todoId
     ) { //변수명 아이디랑 똑같으면 pathvariable 사용 x
         log.info("/api/todos/{} DELETE request!", todoId);
         if(todoId ==null || todoId.trim().equals("")) {
