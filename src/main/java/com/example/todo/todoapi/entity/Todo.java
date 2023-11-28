@@ -1,5 +1,6 @@
 package com.example.todo.todoapi.entity;
 
+import com.example.todo.userapi.entity.User;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.GenericGenerator;
@@ -28,10 +29,12 @@ public class Todo {
 
     private  boolean done; //할일 완료 여부
 
-    @CreationTimestamp
     private LocalDateTime createDate; //등록 시간
 
-
+    //한명의 유저가 여러개의 투두를 가질 수 있다.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 
 
 }

@@ -76,7 +76,8 @@ public class UserController {
             return ResponseEntity.ok().body(responseDTO);
         } catch (Exception e) {
             e.printStackTrace(); //에러 원인 확인
-            return  ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(e.getMessage());
         }
 
 

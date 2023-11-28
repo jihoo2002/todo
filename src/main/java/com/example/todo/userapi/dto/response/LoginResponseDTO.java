@@ -22,7 +22,8 @@ public class LoginResponseDTO {
     private LocalDate joinDate;
 
     private  String token; //인증 토큰
-  //  private String message; //로그인 메세지
+    private  String role; //권한
+
 
     public LoginResponseDTO(User user, String token) {
 
@@ -30,6 +31,7 @@ public class LoginResponseDTO {
         this.userName = user.getUserName();
         this.joinDate = LocalDate.from( user.getJoinDate());//타입이 안맞아서 from 활용
         this.token  = token;
+        this.role = String.valueOf(user.getRole()); //문자열로 변환해서 주세요
 
     }
 }
