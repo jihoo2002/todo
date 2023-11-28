@@ -36,9 +36,7 @@ public class TokenProvider {
         //토큰 만료시간 생성
         Date expiry = Date.from(
                 Instant.now().plus(1, ChronoUnit.DAYS)  //오늘기준으로 하루 더함
-        );
-
-
+        ); //하루짜리 토큰 생성 WEEKS , HOURS YEARS 등등 있음
         //토큰 생성
         /*
             {
@@ -55,21 +53,20 @@ public class TokenProvider {
         //추가 클레임 정의
         Map<String, String> claims = new HashMap<>();
         claims.put("email", userEntity.getEmail());
-      //   claims.put("role", userEntity.getRole());
+        claims.put("role", userEntity.getRole().toString()); //문자열로 주세요
 
         return Jwts.builder()
                 //Token header에 들어갈 서명
                 .signWith(
                         Keys.hmacShaKeyFor(SECRET_KEY.getBytes()),
-                        SignatureAlgorithm.ES512
+                        SignatureAlgorithm.HS512
                 )
                 //token payload에 들어갈 클레임 설정.
+                .setClaims(claims) //-> 추가 클레임을 먼저 설정해야함 !!무조건
                 .setIssuer("Todo운영자")//iss: 발급자 정보
                 .setIssuedAt(new Date()) //lat : 발급 시간
                 .setExpiration(expiry) //exp : 만료 시간
-                // --------------------------------- 위의 값은 필수 아래는 가공할 값
                 .setSubject(userEntity.getId()) //sub : 토큰을 식별할 수 있는 주요 데이터
-                .setClaims(claims)
                 .compact(); //JWT에 들어갈 값을 세팅
     }
 }
