@@ -7,6 +7,7 @@ import com.example.todo.todoapi.dto.response.TodoListResponseDTO;
 import com.example.todo.todoapi.service.TodoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
@@ -38,9 +39,15 @@ public class TodoController {
         }
 
         try {
-            TodoListResponseDTO responseDTO = todoService.create(requestDTO, userInfo.getUserId());
+            TodoListResponseDTO responseDTO = todoService.create(requestDTO, userInfo);
             return ResponseEntity.ok()
                     .body(responseDTO);
+        }catch (IllegalStateException e) {
+            //권한 때문에 발생한 예외
+            log.warn(e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(e.getMessage());
+
         } catch (RuntimeException e) {
             log.error("error createTodo", e);
             return ResponseEntity.internalServerError()
@@ -65,7 +72,7 @@ public class TodoController {
 
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteTodo(
+    public ResponseEntity<?> deleteTodo(@AuthenticationPrincipal TokenUserInfo userInfo,
             @PathVariable("id") String todoId
     ) { //변수명 아이디랑 똑같으면 pathvariable 사용 x
         log.info("/api/todos/{} DELETE request!", todoId);
@@ -77,7 +84,7 @@ public class TodoController {
         }
 
         try {
-            TodoListResponseDTO responseDTO =  todoService.delete(todoId);
+            TodoListResponseDTO responseDTO =  todoService.delete(todoId, userInfo.getUserId());
         return ResponseEntity.ok().body(responseDTO);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(TodoListResponseDTO.builder().error(e.getMessage()).build());
@@ -89,6 +96,7 @@ public class TodoController {
     //할일 수정하기( //할일 완료인지 아닌지를 체크하는 메서드이다.)
     @RequestMapping(method = {RequestMethod.PATCH, RequestMethod.PUT})
     public ResponseEntity<?> updateTodo(
+            @AuthenticationPrincipal TokenUserInfo userInfo,
             @Validated @RequestBody TodoModifyRequestDTO requestDTO,
             BindingResult result,
             HttpServletRequest request
@@ -101,7 +109,7 @@ public class TodoController {
         log.info("modifying dto : {}", requestDTO);
 
         try {
-            TodoListResponseDTO responseDTO = todoService.update(requestDTO);
+            TodoListResponseDTO responseDTO = todoService.update(requestDTO, userInfo.getUserId());
             return ResponseEntity.ok().body(responseDTO);
         } catch (RuntimeException e) {
          return ResponseEntity.internalServerError().body(TodoListResponseDTO.builder().error("존재하지 않는 ID라 수정 안됨!").build());

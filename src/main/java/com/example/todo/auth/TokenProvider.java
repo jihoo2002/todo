@@ -62,8 +62,9 @@ public class TokenProvider {
                 // token header에 들어갈 서명
                 .signWith(
                         Keys.hmacShaKeyFor(SECRET_KEY.getBytes()),
-                        SignatureAlgorithm.HS512
+                        SignatureAlgorithm.HS512 // 사용할 암호화 알고리즘과 , signature 에 들어갈 secret값 세팅
                 )
+                // 토큰으로 클레임을 만들기
                 // token payload에 들어갈 클레임 설정.
                 .setClaims(claims) // 추가 클레임은 먼저 설정해야 함.
                 .setIssuer("Todo운영자") // iss: 발급자 정보

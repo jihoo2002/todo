@@ -1,10 +1,13 @@
 package com.example.todo.userapi.service;
 
 import com.example.todo.auth.TokenProvider;
+import com.example.todo.auth.TokenUserInfo;
+import com.example.todo.exception.NoRegisteredArgumentException;
 import com.example.todo.userapi.dto.request.LoginRequestDTO;
 import com.example.todo.userapi.dto.request.UserRequestSignUpDTO;
 import com.example.todo.userapi.dto.response.LoginResponseDTO;
 import com.example.todo.userapi.dto.response.UserSignUpResponseDTO;
+import com.example.todo.userapi.entity.Role;
 import com.example.todo.userapi.entity.User;
 import com.example.todo.userapi.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -77,6 +80,29 @@ public class UserService {
         String token = tokenProvider.createToken(user);
 
     return new LoginResponseDTO(user, token);
+
+    }
+
+    //프리미엄으로 등급 업
+    public LoginResponseDTO promoteToPremium(TokenUserInfo userInfo) {
+        User foundUser = userRepository.findById(userInfo.getUserId()).orElseThrow(
+                () -> new NoRegisteredArgumentException("회원 조회에 실패했습니다. ")
+            //원래 옵셔널이지만 오류 따로 처리 했기에 user로 받음
+        );
+
+
+        //일반(COMMON)회원이 아니라면 예외발생
+        if(userInfo.getRole() != Role.COMMON) {
+            throw new IllegalArgumentException("일반 회원이 아니라면 등급을 상승시킬 수 없습니다.");
+        }
+        
+        //등급변경
+        foundUser.changeRole(Role.PREMIUM); //메서드를 이용해 롤 수정
+        User saved = userRepository.save(foundUser);
+
+        //토큰을 재발급 , 기존 토큰은 옛날 정보이기 때문에 새 토큰으로 생성해줘야 한다.
+        String token = tokenProvider.createToken(saved);
+        return new LoginResponseDTO(saved, token);
 
     }
 }

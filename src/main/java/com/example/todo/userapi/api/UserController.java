@@ -1,5 +1,7 @@
 package com.example.todo.userapi.api;
 
+import com.example.todo.auth.TokenUserInfo;
+import com.example.todo.exception.NoRegisteredArgumentException;
 import com.example.todo.userapi.dto.request.LoginRequestDTO;
 import com.example.todo.userapi.dto.request.UserRequestSignUpDTO;
 import com.example.todo.userapi.dto.response.LoginResponseDTO;
@@ -8,6 +10,8 @@ import com.example.todo.userapi.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -81,6 +85,35 @@ public class UserController {
         }
 
 
+    }
+
+
+    //일반 회원을 프리미엄 회원으로 승격하는 요청 처리
+    @PutMapping("/promote")
+    //권한 검사 (해당 권한이 아니라면 인가처리 거부 -> 403 코드 리턴)
+    //메서드 호출 전 권한 검사 -> 요청 당시 토큰에 있는 user정보가 ROLE_COMMON이라는 권한을 가지고 있는 지 검사 . 아니라면 403
+    @PreAuthorize("hasRole('ROLE_COMMON')")
+    public ResponseEntity<?> promote(
+            @AuthenticationPrincipal TokenUserInfo userInfo
+            ) {
+        log.info("/api/auth/promote PUT!");
+
+        try {
+           LoginResponseDTO responseDTO =  userService.promoteToPremium(userInfo); //이사람이 커먼인지 프리미엄인지 확인, 누가 승격하려 하는지 등등
+            return ResponseEntity.ok().body(responseDTO);
+        }catch (NoRegisteredArgumentException |IllegalArgumentException e) {
+          //예상 가능한 예외(직접 생성 하는 예외 처리)
+            e.printStackTrace();
+            log.warn(e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(e.getMessage());
+        
+        }catch (Exception e){
+            //예상 하지 못한 예외 처리
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body(e.getMessage());
+        }
     }
 
 

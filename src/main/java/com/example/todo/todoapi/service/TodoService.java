@@ -1,12 +1,14 @@
 package com.example.todo.todoapi.service;
 
 
+import com.example.todo.auth.TokenUserInfo;
 import com.example.todo.todoapi.dto.request.TodoCreateRequestDTO;
 import com.example.todo.todoapi.dto.request.TodoModifyRequestDTO;
 import com.example.todo.todoapi.dto.response.TodoDetailResponseDTO;
 import com.example.todo.todoapi.dto.response.TodoListResponseDTO;
 import com.example.todo.todoapi.entity.Todo;
 import com.example.todo.todoapi.repository.TodoRepository;
+import com.example.todo.userapi.entity.Role;
 import com.example.todo.userapi.entity.User;
 import com.example.todo.userapi.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,15 +31,24 @@ public class TodoService {
 
 
     public TodoListResponseDTO create(final TodoCreateRequestDTO requestDTO,
-                                      final String userId) throws RuntimeException {
+                                      final TokenUserInfo userInfo) throws RuntimeException {
     //매개변수에 final ->전달받은 값을 서비스에서 바꿀 수 없게 만들어줌.
-        User user = getUser(userId);
+        User user = getUser(userInfo.getUserId());
+
+        //권한에 따른 글쓰기 제한 처리
+        //일반 회원이 일정을 5개 초과해서 작성해면 예외를 발생
+        if(userInfo.getRole() == Role.COMMON && todoRepository.countByUser(user) >= 5) {
+            //사용자의 권한이 common이고 글 개수가 5개 이상이라면 !
+            throw new IllegalStateException("일반회원은 더 이상 일정을 작성할 수 없습니다.");
+
+        }
+
         //이제는 할일 등록은 회원만 할 수 있도록 세팅해야 하기 때문에
         //toEntity의 매개값으로 User 엔터티도 함께 전달 해야 합니다. -> userId로 회원 엔터티 조회
         todoRepository.save(requestDTO.toEntity(user));
         log.info("할일 저장 완료. 제목 : {}", requestDTO.getTitle());
 
-        return retrieve(userId);
+        return retrieve(userInfo.getUserId());
     }
 
 
@@ -70,17 +81,17 @@ public class TodoService {
     }
 
 
-    public TodoListResponseDTO delete(final String todoId) {
+    public TodoListResponseDTO delete(final String todoId, final String userId) {
         try {
             todoRepository.deleteById(todoId);
         } catch (Exception e) {
             log.error("ID가 존재하지 않아 삭제에 실패했습니다.- ID :{}, ERR:{}" ,todoId, e.getMessage());
             throw new RuntimeException("ID가 존재하지 않아 삭제에 실패했습니다."); //서비스에서 오류 잡으면 컨트롤러에게도 알려줘야 하기 때문에
         }
-        return retrieve("");
+        return retrieve(userId);
     }
 
-    public TodoListResponseDTO update(final TodoModifyRequestDTO requestDTO)
+    public TodoListResponseDTO update(final TodoModifyRequestDTO requestDTO, final String userId)
     throws RuntimeException {
         Optional<Todo> targetEntity = todoRepository.findById(requestDTO.getId());
 
@@ -93,7 +104,7 @@ public class TodoService {
             //-> optional 타입이기 때문에 !!! 그래서 깐 데이터 todo를 주면 된다.
         });
 
-        return retrieve("");
+        return retrieve(userId);
 
     }
 }
