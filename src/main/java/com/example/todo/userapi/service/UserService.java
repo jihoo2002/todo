@@ -12,21 +12,32 @@ import com.example.todo.userapi.entity.User;
 import com.example.todo.userapi.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.UUID;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class UserService {
 
+
+
     private final UserRepository userRepository;
 
     private  final PasswordEncoder passwordEncoder; //빈등록 해야 사용 가능 -> WebSecurityConfig 클래스에서 빈 등록함
 
     private final TokenProvider tokenProvider; //주입 받아 토큰을 이용해 유효성 검사를 해줄 것
+
+    @Value("${upload.path}") //yml 파일 속에 있음
+    private String uploadRootPath;
     //회원가입 처리
-    public UserSignUpResponseDTO create(final UserRequestSignUpDTO dto) {
+    public UserSignUpResponseDTO create(final UserRequestSignUpDTO dto, final String uploadedFilePath) {
         String email = dto.getEmail();
 
         if(isDuplicate(email)) {
@@ -40,7 +51,7 @@ public class UserService {
         dto.setPassword(encoded);
 
         //dto를 User entity로 변환해서 저장
-        User saved = userRepository.save(dto.toEntity());
+        User saved = userRepository.save(dto.toEntity(uploadedFilePath));
 
         log.info("회원가입 정상 수행됨! - saved user -{}", saved);
 
@@ -104,5 +115,37 @@ public class UserService {
         String token = tokenProvider.createToken(saved);
         return new LoginResponseDTO(saved, token);
 
+    }
+
+    /**
+     * 업로드된 파일을 서버에 저장하고 저장 경로를 리턴.
+     *
+     * @param profileImg - 업로드된 파일 정보
+     * @return 실제로 저장된 이미지 경로
+     */
+    public String uploadProfileImage(MultipartFile profileImg) throws IOException {
+
+        //루트 디렉토리가 실존하는지 확인 후 존재하지 않으면 생성.
+        File rootDir = new File(uploadRootPath);
+        if(!rootDir.exists()) {
+            rootDir.mkdir();
+        }
+
+        //파일명을 유니크하게 변경(이름 충돌 가능성을 대비)
+        //uuid와 원본 파일명을 혼합
+        String uniqueFileName = UUID.randomUUID() + "_" + profileImg.getOriginalFilename();
+        
+        //퍄일을 저장
+        File uploadFile = new File(uploadRootPath + "/" + uniqueFileName);
+        profileImg.transferTo(uploadFile);
+
+        return uniqueFileName;
+    }
+
+    public String findProfilePath(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow();
+        //DB에 저장되는 profile.img는 파일명 => service가 가지고 있는 ROOT PATH와 연결해서 리턴
+        return uploadRootPath  + "/" + user.getProfileImg();
     }
 }

@@ -47,6 +47,9 @@ dependencies {
 	// 스프링 시큐리티 모듈
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 
+
+	// 파일 업로드 라이브러리 |라이브러리는 무조건 dependencies안에 넣어야 함
+	implementation 'commons-io:commons-io:2.8.0'
 }
 
 tasks.named('bootBuildImage') {
