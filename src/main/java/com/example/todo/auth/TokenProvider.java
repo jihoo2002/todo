@@ -37,7 +37,7 @@ public class TokenProvider {
 
         // 토큰 만료시간 생성
         Date expiry = Date.from(
-                Instant.now().plus(1, ChronoUnit.DAYS)
+                Instant.now().plus(10, ChronoUnit.SECONDS) //카카오톡 토큰 만료 시간이 6시간이니까 !
         );
 
         // 토큰 생성

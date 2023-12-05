@@ -25,6 +25,7 @@ public class LoginResponseDTO {
     private  String role; //권한
 
 
+
     public LoginResponseDTO(User user, String token) {
 
         this.email  = user.getEmail();
@@ -32,6 +33,7 @@ public class LoginResponseDTO {
         this.joinDate = LocalDate.from( user.getJoinDate());//타입이 안맞아서 from 활용
         this.token  = token;
         this.role = String.valueOf(user.getRole()); //문자열로 변환해서 주세요
+
 
     }
 }

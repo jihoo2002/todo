@@ -1,5 +1,6 @@
 package com.example.todo.userapi.dto.response;
 
+import com.example.todo.userapi.entity.User;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
@@ -36,5 +37,16 @@ public class KakaoUserDTO {
 
 
 
+    }
+
+    public User toEntity(String accessToken) {
+        return User.builder()
+                //id를 줬지만 user쪽에 uuid니까 uuid로 데이터베이스쪽으로 들ㅇ간다.
+                .email(this.kakaoAccount.email)
+                .userName(this.kakaoAccount.profile.nickname)
+                .password("password!") //아무값이나 넣어준다.
+                .profileImg(this.kakaoAccount.profile.profileImageUrl)
+                .accessToken(accessToken)
+                .build();
     }
 }

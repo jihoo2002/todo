@@ -10,6 +10,7 @@ import com.example.todo.userapi.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -155,9 +156,14 @@ public class UserController {
 
             //모든 사용자가 프로필 사진을 가지는 것은 아니다 -> 프사 없는 사람들은 경로가 존재하지 않을 것이다.
             //만약 존재하지 않는 경로라면 클라이언트로  404 status를 리턴
-            if(profileFile.exists()) {
+            if(!profileFile.exists()) {
+                if(filePath.startsWith("http")) {
+                    return ResponseEntity.status(210).body(filePath);
+                }
                 return ResponseEntity.notFound().build();
             }
+
+
             //해당 경로에 저장된 파일을 바이트 배열로 직렬화 해서 리턴
             byte[] fileData = FileCopyUtils.copyToByteArray(profileFile);
 
@@ -204,8 +210,19 @@ public class UserController {
     @GetMapping("/kakaoLogin")
     public ResponseEntity<?> kakaoLogin(String code) {
         log.info("/api/auth/kakaoLogin - GET -code: {}", code);
-        userService.kakaoService(code);
-        return null;
+        LoginResponseDTO responseDTO = userService.kakaoService(code);
+        return ResponseEntity.ok(responseDTO);
     }
+
+    //로그아웃 처리
+    @GetMapping("/logout")
+    public ResponseEntity<?> logout(@AuthenticationPrincipal TokenUserInfo userInfo) {
+    log.info("api/auth/logout - GET -user : {}", userInfo);
+        String result = userService.logout(userInfo);
+        //카카오 로그인 한 사람은 result에 아이디가 들어 있음, 아닌 사람은 null
+
+        return ResponseEntity.ok().body(result);
+    }
+
 
 }
